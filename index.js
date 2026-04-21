@@ -233,6 +233,24 @@ client.on('messageCreate', async message => {
       message.channel.send('❌ Nuke başarısız');
     }
   }
+  
+  if (!fs.existsSync('./data.json')) {
+  fs.writeFileSync('./data.json', '{}');
+}
+
+let raw = fs.readFileSync('./data.json', 'utf-8');
+
+if (!raw || raw.trim() === '') {
+  raw = '{}';
+}
+
+let data;
+try {
+  data = JSON.parse(raw);
+} catch (err) {
+  console.log('JSON bozuk, sıfırlandı');
+  data = {};
+}
 
 });
 client.login(process.env.TOKEN); 
