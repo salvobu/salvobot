@@ -251,7 +251,12 @@ try {
   console.log('JSON bozuk, sıfırlandı');
   data = {};
 }
-  const express = require('express');
+
+});
+client.login(process.env.TOKEN);
+
+// 🔻 EN ALT BURASI
+const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
@@ -262,5 +267,3 @@ app.listen(3000, () => {
   console.log('Web server aktif');
 });
 
-});
-client.login(process.env.TOKEN); 
