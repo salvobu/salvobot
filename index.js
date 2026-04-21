@@ -253,7 +253,7 @@ try {
 }
 
 });
-console.log("TOKEN:", process.env.TOKEN);
+client.login(process.env.TOKEN);
 
 // 🔻 EN ALT BURASI
 const express = require('express');
