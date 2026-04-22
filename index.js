@@ -143,8 +143,6 @@ client.on('messageCreate', async message => {
     const v=data[message.author.id];
     if(!v) return message.reply('Veri yok');
 
-    const saat = x=>(x/1000/60/60).toFixed(2);
-
     const canvas=Canvas.createCanvas(800,400);
     const ctx=canvas.getContext('2d');
 
