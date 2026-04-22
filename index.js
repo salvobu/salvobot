@@ -93,6 +93,36 @@ client.on('voiceStateUpdate', (o,n) => {
   }
 });
 
+// ===== SES TAKİP =====
+client.on('voiceStateUpdate', (o, n) => {
+  console.log("SES EVENT ÇALIŞTI");
+
+  const u = n.member;
+  if (!u) return;
+
+  if (!data[u.id]) {
+    data[u.id] = { total: 0, weekly: 0, monthly: 0, yearly: 0, last: null };
+  }
+
+  // kanala giriş
+  if (!o.channel && n.channel) {
+    data[u.id].last = Date.now();
+  }
+
+  // kanaldan çıkış
+  if (o.channel && !n.channel && data[u.id].last) {
+    const süre = Date.now() - data[u.id].last;
+
+    data[u.id].total += süre;
+    data[u.id].weekly += süre;
+    data[u.id].monthly += süre;
+    data[u.id].yearly += süre;
+
+    data[u.id].last = null;
+    save();
+  }
+});
+
 // ===== MESAJ =====
 client.on('messageCreate', async message => {
   if (!message.guild || message.author.bot) return;
