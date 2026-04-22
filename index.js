@@ -138,42 +138,78 @@ client.on('messageCreate', async message => {
     return;
   }
 
-  // ===== SES KOMUT =====
-  if(cmd==='!ses'){
-    const v=data[message.author.id];
-    if(!v) return message.reply('Veri yok');
+ // ===== SES KOMUT (PREMIUM) =====
+if(cmd==='!ses'){
+  const v = data[message.author.id];
+  if(!v) return message.reply('Veri yok');
 
-    const canvas=Canvas.createCanvas(800,400);
-    const ctx=canvas.getContext('2d');
+  const saat = x => ((x || 0) / 1000 / 60 / 60).toFixed(2);
 
-    ctx.fillStyle = '#ffffff';
-ctx.strokeStyle = '#000000';
-ctx.lineWidth = 2;
+  const canvas = Canvas.createCanvas(900,450);
+  const ctx = canvas.getContext('2d');
 
-ctx.strokeText(`Toplam: ${saat(v.total)} saat`, 250, 150);
-ctx.fillText(`Toplam: ${saat(v.total)} saat`, 250, 150);
+  // ===== ARKA PLAN (gradient) =====
+  const gradient = ctx.createLinearGradient(0,0,900,450);
+  gradient.addColorStop(0, "#0f2027");
+  gradient.addColorStop(1, "#2c5364");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0,0,900,450);
 
-    const avatar=await Canvas.loadImage(message.author.displayAvatarURL({extension:'png'}));
-    ctx.drawImage(avatar,50,100,150,150);
+  // ===== SUNUCU LOGO =====
+  let guildIcon;
+  try {
+    guildIcon = await Canvas.loadImage(message.guild.iconURL({extension:'png'}));
+    ctx.drawImage(guildIcon, 20, 20, 80, 80);
+  } catch {}
 
-    ctx.fillStyle='#fff';
-   const saat = x => ((x || 0) / 1000 / 60 / 60).toFixed(2);
+  // ===== KULLANICI AVATAR =====
+  const avatar = await Canvas.loadImage(message.author.displayAvatarURL({extension:'png'}));
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(120, 280, 70, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(avatar, 50, 210, 140, 140);
+  ctx.restore();
 
-ctx.fillStyle = '#fff';
-ctx.font = '24px sans-serif';
+  // ===== BAŞLIK =====
+  ctx.fillStyle = "#00eaff";
+  ctx.font = "bold 40px sans-serif";
+  ctx.fillText("SES PANEL", 300, 70);
 
-ctx.fillText(`Toplam: ${saat(v.total)} saat`, 250, 150);
-ctx.fillText(`Haftalık: ${saat(v.weekly)} saat`, 250, 190);
-ctx.fillText(`Aylık: ${saat(v.monthly)} saat`, 250, 230);
-ctx.fillText(`Yıllık: ${saat(v.yearly)} saat`, 250, 270);
-    
-  
-    const a=new AttachmentBuilder(canvas.toBuffer(),{name:'ses.png'});
-    return message.channel.send({files:[a]});
+  // ===== KULLANICI ADI =====
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "24px sans-serif";
+  ctx.fillText(message.author.tag, 300, 110);
+
+  // ===== BOX FONKSİYON =====
+  function box(x,y,w,h,title,value,color){
+    ctx.fillStyle = color;
+    ctx.fillRect(x,y,w,h);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "20px sans-serif";
+    ctx.fillText(title, x+15, y+30);
+
+    ctx.font = "bold 26px sans-serif";
+    ctx.fillText(value + " saat", x+15, y+70);
   }
 
-  if(!yetkili) return;
+  // ===== BOX'lar =====
+  box(250,150,200,100,"TOPLAM", saat(v.total), "#1abc9c");
+  box(480,150,200,100,"HAFTALIK", saat(v.weekly), "#3498db");
+  box(250,280,200,100,"AYLIK", saat(v.monthly), "#9b59b6");
+  box(480,280,200,100,"YILLIK", saat(v.yearly), "#e67e22");
 
+  // ===== ALT YAZI =====
+  ctx.fillStyle = "#aaaaaa";
+  ctx.font = "16px sans-serif";
+  ctx.fillText("Voice Activity System", 650, 430);
+
+  const a = new AttachmentBuilder(canvas.toBuffer(), { name: "ses.png" });
+  return message.channel.send({ files: [a] });
+}
+  
   // ===== SİL =====
   if(cmd==='!sil'){
     const n=parseInt(args[1]);
