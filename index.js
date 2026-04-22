@@ -234,6 +234,114 @@ if(cmd==='!ses'){
 
 client.login(process.env.TOKEN);
 
+// ===== NUKE =====
+if(cmd === '!nuke'){
+  if(!yetkili) return message.reply('Yetkin yok');
+
+  try{
+    const eski = message.channel;
+
+    const yeni = await eski.clone({
+      name: eski.name,
+      permissionsLocked: false
+    });
+
+    await eski.delete().catch(()=>{});
+
+    // foto ayar tekrar
+    await fotoAyarla(yeni.guild);
+
+    yeni.send('💣 Kanal sıfırlandı');
+
+    if(log) log.send(`💣 ${message.author.tag} nuke attı`);
+  }catch(err){
+    console.log(err);
+    message.channel.send('❌ Nuke çalışmadı');
+  }
+}
+
+// ===== TIMEOUT =====
+if(cmd === '!s'){
+  if(!yetkili) return message.reply('Yetkin yok');
+
+  const k = message.mentions.members.first();
+  const dk = parseInt(args[2]);
+
+  if(!k) return message.reply('Kullanıcı etiketle');
+  if(!dk || isNaN(dk)) return message.reply('Süre gir (dk)');
+
+  // kendine atamasın
+  if(k.id === message.author.id)
+    return message.reply('Kendine atamazsın');
+
+  // bot izin kontrol
+  if(!k.moderatable)
+    return message.reply('Bu kullanıcıya işlem yapamıyorum');
+
+  try{
+    await k.timeout(dk * 60 * 1000);
+
+    message.channel.send(`🔇 ${k.user.tag} ${dk} dakika susturuldu`);
+
+    if(log) log.send(`🔇 ${k.user.tag} ${dk}dk timeout | ${message.author.tag}`);
+
+  }catch(err){
+    console.log(err);
+    message.channel.send('❌ Timeout atılamadı');
+  }
+}
+
+// ===== BAN =====
+if(cmd === '!ban'){
+  if(!yetkili) return message.reply('Yetkin yok');
+
+  const k = message.mentions.members.first();
+  if(!k) return message.reply('Kullanıcı etiketle');
+
+  if(k.id === message.author.id)
+    return message.reply('Kendini banlayamazsın');
+
+  if(!k.bannable)
+    return message.reply('Bu kullanıcıyı banlayamıyorum');
+
+  try{
+    await k.ban({ reason: `Banlayan: ${message.author.tag}` });
+
+    message.channel.send(`🔨 ${k.user.tag} banlandı`);
+
+    if(log) log.send(`🔨 ${k.user.tag} banlandı | ${message.author.tag}`);
+  }catch(err){
+    console.log(err);
+    message.channel.send('❌ Ban atılamadı');
+  }
+}
+
+// ===== KICK =====
+if(cmd === '!at'){
+  if(!yetkili) return message.reply('Yetkin yok');
+
+  const k = message.mentions.members.first();
+  if(!k) return message.reply('Kullanıcı etiketle');
+
+  if(k.id === message.author.id)
+    return message.reply('Kendini atamazsın');
+
+  if(!k.kickable)
+    return message.reply('Bu kullanıcıyı atamıyorum');
+
+  try{
+    await k.kick(`Kickleyen: ${message.author.tag}`);
+
+    message.channel.send(`👢 ${k.user.tag} atıldı`);
+
+    if(log) log.send(`👢 ${k.user.tag} atıldı | ${message.author.tag}`);
+  }catch(err){
+    console.log(err);
+    message.channel.send('❌ Kick atılamadı');
+  }
+}
+
+
 // ===== WEB =====
 const express = require('express');
 const app = express();
