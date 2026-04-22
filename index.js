@@ -148,22 +148,28 @@ client.on('messageCreate', async message => {
     const canvas=Canvas.createCanvas(800,400);
     const ctx=canvas.getContext('2d');
 
-    ctx.fillStyle='#000';
-    ctx.fillRect(0,0,800,400);
+    ctx.fillStyle = '#ffffff';
+ctx.strokeStyle = '#000000';
+ctx.lineWidth = 2;
 
-    ctx.fillStyle='#0ff';
-    ctx.font='30px sans-serif';
-    ctx.fillText('SES PANEL',300,50);
+ctx.strokeText(`Toplam: ${saat(v.total)} saat`, 250, 150);
+ctx.fillText(`Toplam: ${saat(v.total)} saat`, 250, 150);
 
     const avatar=await Canvas.loadImage(message.author.displayAvatarURL({extension:'png'}));
     ctx.drawImage(avatar,50,100,150,150);
 
     ctx.fillStyle='#fff';
-    ctx.fillText(`Toplam: ${saat(v.total)} saat`,300,150);
-    ctx.fillText(`Haftalık: ${saat(v.weekly)} saat`,300,200);
-    ctx.fillText(`Aylık: ${saat(v.monthly)} saat`,300,250);
-    ctx.fillText(`Yıllık: ${saat(v.yearly)} saat`,300,300);
+   const saat = x => ((x || 0) / 1000 / 60 / 60).toFixed(2);
 
+ctx.fillStyle = '#fff';
+ctx.font = '24px sans-serif';
+
+ctx.fillText(`Toplam: ${saat(v.total)} saat`, 250, 150);
+ctx.fillText(`Haftalık: ${saat(v.weekly)} saat`, 250, 190);
+ctx.fillText(`Aylık: ${saat(v.monthly)} saat`, 250, 230);
+ctx.fillText(`Yıllık: ${saat(v.yearly)} saat`, 250, 270);
+    
+  
     const a=new AttachmentBuilder(canvas.toBuffer(),{name:'ses.png'});
     return message.channel.send({files:[a]});
   }
