@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, PermissionsBitField, ChannelType, AttachmentBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, ChannelType, AttachmentBuilder } = require('discord.js');
 const Canvas = require('canvas');
 const fs = require('fs');
 
@@ -15,7 +15,11 @@ const client = new Client({
 // ===== DATABASE =====
 let data = {};
 if (fs.existsSync('./data.json')) {
-  data = JSON.parse(fs.readFileSync('./data.json'));
+  try {
+    data = JSON.parse(fs.readFileSync('./data.json'));
+  } catch {
+    data = {};
+  }
 }
 const save = () => fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
 
@@ -75,28 +79,8 @@ client.on('guildMemberRemove', m => {
   if (kanal) kanal.send(`❌ ${m.user.tag} çıktı`);
 });
 
-// ===== SES =====
-client.on('voiceStateUpdate', (o,n) => {
-  const u = n.member;
-  if (!data[u.id]) data[u.id]={total:0,weekly:0,monthly:0,yearly:0,last:null};
-
-  if (!o.channel && n.channel) data[u.id].last = Date.now();
-
-  if (o.channel && !n.channel && data[u.id].last){
-    const s = Date.now()-data[u.id].last;
-    data[u.id].total+=s;
-    data[u.id].weekly+=s;
-    data[u.id].monthly+=s;
-    data[u.id].yearly+=s;
-    data[u.id].last=null;
-    save();
-  }
-});
-
-// ===== SES TAKİP =====
+// ===== SES TAKİP (TEK EVENT) =====
 client.on('voiceStateUpdate', (o, n) => {
-  console.log("SES EVENT ÇALIŞTI");
-
   const u = n.member;
   if (!u) return;
 
@@ -104,19 +88,19 @@ client.on('voiceStateUpdate', (o, n) => {
     data[u.id] = { total: 0, weekly: 0, monthly: 0, yearly: 0, last: null };
   }
 
-  // kanala giriş
+  // giriş
   if (!o.channel && n.channel) {
     data[u.id].last = Date.now();
   }
 
-  // kanaldan çıkış
+  // çıkış
   if (o.channel && !n.channel && data[u.id].last) {
-    const süre = Date.now() - data[u.id].last;
+    const s = Date.now() - data[u.id].last;
 
-    data[u.id].total += süre;
-    data[u.id].weekly += süre;
-    data[u.id].monthly += süre;
-    data[u.id].yearly += süre;
+    data[u.id].total += s;
+    data[u.id].weekly += s;
+    data[u.id].monthly += s;
+    data[u.id].yearly += s;
 
     data[u.id].last = null;
     save();
@@ -127,7 +111,7 @@ client.on('voiceStateUpdate', (o, n) => {
 client.on('messageCreate', async message => {
   if (!message.guild || message.author.bot) return;
 
-  const args = message.content.split(' ');
+  const args = message.content.trim().split(/ +/);
   const cmd = args[0].toLowerCase();
 
   const log = message.guild.channels.cache.find(c=>c.name==='log');
@@ -154,13 +138,7 @@ client.on('messageCreate', async message => {
     return;
   }
 
-  // ===== UZUN =====
-  if(message.content.length>500 && !yetkili){
-    await message.delete().catch(()=>{});
-    await message.member.timeout(5*60*1000).catch(()=>{});
-  }
-
-  // ===== SES =====
+  // ===== SES KOMUT =====
   if(cmd==='!ses'){
     const v=data[message.author.id];
     if(!v) return message.reply('Veri yok');
@@ -190,7 +168,6 @@ client.on('messageCreate', async message => {
     return message.channel.send({files:[a]});
   }
 
-  // ===== YETKİ =====
   if(!yetkili) return;
 
   // ===== SİL =====
@@ -198,28 +175,9 @@ client.on('messageCreate', async message => {
     const n=parseInt(args[1]);
     if(!n||n<1||n>100) return message.reply('1-100 gir');
 
-    try{
-      const sil = await message.channel.bulkDelete(n,true);
-      message.channel.send(`🧹 ${sil.size} mesaj silindi`).then(m=>setTimeout(()=>m.delete(),3000));
-      if(log) log.send(`🧹 ${message.author.tag} ${sil.size} mesaj sildi`);
-    }catch{
-      message.channel.send('❌ Silinemedi');
-    }
-  }
-
-  // ===== KICK =====
-  if(cmd==='!at'){
-    const k=message.mentions.members.first();
-    if(!k) return message.reply('Etiketle');
-    if(!k.kickable) return message.reply('Atamam');
-
-    try{
-      await k.kick();
-      message.channel.send(`👢 ${k.user.tag} atıldı`);
-      if(log) log.send(`👢 ${k.user.tag} atıldı | ${message.author.tag}`);
-    }catch{
-      message.channel.send('❌ Kick atılamadı');
-    }
+    const sil = await message.channel.bulkDelete(n,true);
+    message.channel.send(`🧹 ${sil.size} mesaj silindi`).then(m=>setTimeout(()=>m.delete(),3000));
+    if(log) log.send(`🧹 ${message.author.tag} ${sil.size} mesaj sildi`);
   }
 
   // ===== BAN =====
@@ -228,64 +186,15 @@ client.on('messageCreate', async message => {
     if(!k) return message.reply('Etiketle');
     if(!k.bannable) return message.reply('Banlayamam');
 
-    try{
-      await k.ban();
-      message.channel.send(`🔨 ${k.user.tag} banlandı`);
-      if(log) log.send(`🔨 ${k.user.tag} banlandı | ${message.author.tag}`);
-    }catch{
-      message.channel.send('❌ Ban atılamadı');
-    }
+    await k.ban();
+    message.channel.send(`🔨 ${k.user.tag} banlandı`);
+    if(log) log.send(`🔨 ${k.user.tag} banlandı | ${message.author.tag}`);
   }
-
-  // ===== TIMEOUT =====
-  if(cmd==='!s'){
-    const k=message.mentions.members.first();
-    const dk=parseInt(args[2]);
-    if(!k||!dk) return message.reply('!s @kişi 5');
-
-    try{
-      await k.timeout(dk*60000);
-      message.channel.send(`🔇 ${k.user.tag} ${dk} dk susturuldu`);
-      if(log) log.send(`🔇 ${k.user.tag} ${dk}dk timeout | ${message.author.tag}`);
-    }catch{
-      message.channel.send('❌ Timeout atılamadı');
-    }
-  }
-
-  // ===== NUKE =====
-  if(cmd==='!nuke'){
-    try{
-      const yeni = await message.channel.clone();
-      await message.channel.delete();
-      await fotoAyarla(yeni.guild);
-      if(log) log.send(`💣 ${message.author.tag} nuke attı`);
-    }catch{
-      message.channel.send('❌ Nuke başarısız');
-    }
-  }
-  
-  if (!fs.existsSync('./data.json')) {
-  fs.writeFileSync('./data.json', '{}');
-}
-
-let raw = fs.readFileSync('./data.json', 'utf-8');
-
-if (!raw || raw.trim() === '') {
-  raw = '{}';
-}
-
-let data;
-try {
-  data = JSON.parse(raw);
-} catch (err) {
-  console.log('JSON bozuk, sıfırlandı');
-  data = {};
-}
-
 });
+
 client.login(process.env.TOKEN);
 
-// 🔻 EN ALT BURASI
+// ===== WEB =====
 const express = require('express');
 const app = express();
 
@@ -294,6 +203,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('Web server aktif');
+  console.log('Web panel aktif');
 });
-
